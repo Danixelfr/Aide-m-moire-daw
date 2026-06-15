@@ -10,15 +10,15 @@ const cors_1 = __importDefault(require("@fastify/cors"));
 const fastify = (0, fastify_1.default)();
 fastify.register(cors_1.default);
 fastify.post("/film", (request, reply) => {
-    const { titre, realisateur, annee } = request.body;
-    const query = database_1.db.prepare("INSERT INTO `film`(titre,realisateur,annee) VALUES(?,?,?)");
-    const result = query.run(titre, realisateur, annee);
+    const { titre, realisateur, annee, genre_id } = request.body;
+    const query = database_1.db.prepare("INSERT INTO `film`(titre,realisateur,annee,genre_id) VALUES(?,?,?,?)");
+    const result = query.run(titre, realisateur, annee, genre_id);
     if (result) {
         reply.code(200);
     }
 });
 fastify.get("/film", (request, reply) => {
-    const query = database_1.db.prepare("SELECT * from `film`");
+    const query = database_1.db.prepare("SELECT film.*, genre.nom AS genre FROM film LEFT JOIN genre ON film.genre_id = genre.id");
     const result = query.all();
     if (result) {
         reply.send(result);
@@ -27,10 +27,15 @@ fastify.get("/film", (request, reply) => {
 fastify.get("/film/:text", (request, reply) => {
     const { text } = request.params;
     const search = `%${text}%`;
-    const query = database_1.db.prepare("SELECT * FROM `film` WHERE titre LIKE ? OR realisateur LIKE ? OR annee LIKE ?");
+    const query = database_1.db.prepare("SELECT film.*, genre.nom AS genre FROM film LEFT JOIN genre ON film.genre_id = genre.id");
     const result = query.all(search, search, search);
     if (result) {
         reply.send(result);
     }
+});
+fastify.get("/genre", (request, reply) => {
+    const query = database_1.db.prepare("SELECT * FROM `genre`");
+    const result = query.all();
+    reply.send(result);
 });
 fastify.listen({ port: 8080 });
